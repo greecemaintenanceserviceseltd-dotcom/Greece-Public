@@ -7,7 +7,7 @@
     "start": "node server.js",
     "backup": "node scripts/backup.js",
     "package:netlify": "node scripts/package-netlify.js",
-    "test": "node --test",
+    "test": "node --test test/api.test.js && tsx --test test/netlify.test.ts",
     "test:e2e": "node e2e/run.js",
     "test:all": "npm test && npm run test:e2e",
     "lint": "eslint .",
