@@ -2,6 +2,11 @@
 <html dir="rtl" lang="he">
   <head>
     <meta charset="utf-8" />
+    <script>
+      if (/(?:^#|&)(?:invite_token|recovery_token|confirmation_token)=/.test(location.hash)) {
+        location.replace("/crm" + location.hash);
+      }
+    </script>
     <link href="https://fonts.googleapis.com" rel="preconnect" />
     <link crossorigin href="https://fonts.gstatic.com" rel="preconnect" />
     <link
@@ -28,10 +33,10 @@
     />
     <meta content="website" property="og:type" />
     <meta
-      content="https://greece.up.railway.app/images/logo-og.png"
+      content="https://bejewelled-shortbread-a9a65e.netlify.app/images/logo-og.png"
       property="og:image"
     />
-    <meta content="https://greece.up.railway.app" property="og:url" />
+    <meta content="https://bejewelled-shortbread-a9a65e.netlify.app" property="og:url" />
     <meta content="Greece" property="og:site_name" />
     <meta content="Greece" name="twitter:title" />
     <meta
@@ -39,15 +44,15 @@
       name="twitter:description"
     />
     <meta
-      content="https://greece.up.railway.app/images/logo-og.png"
+      content="https://bejewelled-shortbread-a9a65e.netlify.app/images/logo-og.png"
       name="twitter:image"
     />
     <meta content="summary_large_image" name="twitter:card" />
-    <meta content="https://greece.up.railway.app" name="twitter:url" />
+    <meta content="https://bejewelled-shortbread-a9a65e.netlify.app" name="twitter:url" />
     <meta content="yes" name="mobile-web-app-capable" />
     <meta content="black" name="apple-mobile-web-app-status-bar-style" />
     <meta content="Greece" name="apple-mobile-web-app-title" />
-    <link href="https://greece.up.railway.app" rel="canonical" />
+    <link href="https://bejewelled-shortbread-a9a65e.netlify.app" rel="canonical" />
     <link crossorigin href="/assets/index-DksVoHva.css" rel="stylesheet" />
     <link href="/theme-fix.css" rel="stylesheet" />
     <script crossorigin src="/assets/index-B83c03c98.js" type="module"></script>
@@ -83,10 +88,10 @@
       }
     </script>
     <script type="application/ld+json">
-      {"name":"Greece","@context":"https://schema.org","@type":"WebSite","url":"https://greece.up.railway.app"}
+      {"name":"Greece","@context":"https://schema.org","@type":"WebSite","url":"https://bejewelled-shortbread-a9a65e.netlify.app"}
     </script>
     <script type="application/ld+json">
-      {"name":"Greece","logo":"https://greece.up.railway.app/images/logo.png","@context":"https://schema.org","@type":"Organization","url":"https://greece.up.railway.app"}
+      {"name":"Greece","logo":"https://bejewelled-shortbread-a9a65e.netlify.app/images/logo.png","@context":"https://schema.org","@type":"Organization","url":"https://bejewelled-shortbread-a9a65e.netlify.app"}
     </script>
     <script defer src="/contact-fix.js"></script>
     <script defer src="/site-fixes.js"></script>

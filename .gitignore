@@ -5,3 +5,6 @@ data.json
 .DS_Store
 *.log
 dist/
+
+# Local Netlify folder
+.netlify

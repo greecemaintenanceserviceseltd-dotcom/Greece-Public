@@ -1,0 +1,11 @@
+{
+  "name": "Greece Maintenance & Staffing",
+  "short_name": "Greece",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0B0E12",
+  "theme_color": "#C88A58",
+  "icons": [
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}

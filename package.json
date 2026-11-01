@@ -11,18 +11,24 @@
     "test:e2e": "node e2e/run.js",
     "test:all": "npm test && npm run test:e2e",
     "lint": "eslint .",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.netlify.json",
+    "test:netlify": "tsx --test test/netlify.test.ts"
   },
   "engines": {
     "node": ">=20"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^1.3.0",
+    "@netlify/blobs": "^11.1.7",
+    "@netlify/database": "^2.0.1",
+    "@netlify/identity": "^2.0.0",
     "@simplewebauthn/server": "^13.3.2",
     "bcryptjs": "^3.0.2",
     "better-sqlite3": "^12.2.0",
     "compression": "^1.8.1",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.0",
+    "drizzle-orm": "^1.0.0-beta.22",
     "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "express-rate-limit": "^8.0.1",
@@ -35,14 +41,19 @@
   "devDependencies": {
     "@axe-core/puppeteer": "^4.10.2",
     "@eslint/js": "^10.0.1",
+    "@netlify/functions": "^6.0.3",
     "@types/better-sqlite3": "^7.6.13",
     "@types/express": "^5.0.6",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^26.1.1",
+    "@types/nodemailer": "^8.0.2",
+    "@types/pdfkit": "^0.17.7",
+    "drizzle-kit": "^1.0.0-beta.22",
     "eslint": "^10.7.0",
     "globals": "^17.7.0",
     "prettier": "^3.9.6",
     "puppeteer-core": "^24.15.0",
+    "tsx": "^4.23.15",
     "typescript": "^7.0.2"
   },
   "overrides": {

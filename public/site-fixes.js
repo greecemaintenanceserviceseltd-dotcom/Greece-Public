@@ -213,11 +213,15 @@
     if (descriptionMeta) descriptionMeta.content = "Greece provides staffing, maintenance, cleaning and logistics services for demanding operations.";
     const canonical = document.querySelector("link[rel='canonical']");
     if (canonical)
-      canonical.href = "https://greece-website-production.up.railway.app";
-    for (const el of document.querySelectorAll("body *")) {
-      if (!el.textContent) continue;
-      const nextText = el.textContent.replace(/\bgris\b/gi, "Greece");
-      if (nextText !== el.textContent) el.textContent = nextText;
+      canonical.href = new URL(location.pathname, location.origin).href;
+    // Update text nodes individually: setting a container's textContent removes
+    // its children, including the React interface and its event handlers.
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node = walker.currentNode;
+      if (node.parentElement?.closest("script,style,textarea,input")) continue;
+      const nextText = node.nodeValue.replace(/\bgris\b/gi, "Greece");
+      if (nextText !== node.nodeValue) node.nodeValue = nextText;
     }
     for (const attr of ["aria-label", "alt", "placeholder", "title"]) {
       for (const el of document.querySelectorAll(`[${attr}]`)) {
