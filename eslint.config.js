@@ -6,6 +6,7 @@ module.exports = [
     ignores: [
       "public/assets/**",
       "node_modules/**",
+      ".netlify/**",
       "storage/**",
       "*.min.js",
     ],

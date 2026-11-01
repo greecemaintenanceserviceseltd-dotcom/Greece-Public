@@ -783,7 +783,7 @@ const PHRASE_HE = {
   "Record deleted": "הרשומה נמחקה",
   "Secure storage": "אחסון מאובטח",
   "Upload a file": "העלה קובץ",
-  "File (PDF, image, text, CSV or XLSX; max 10 MB)":
+  "File (PDF, image, text, CSV or XLSX; max 3 MB)":
     "קובץ (PDF, תמונה, טקסט, CSV או XLSX; עד 10MB)",
   "Related record type": "סוג רשומה קשורה",
   General: "כללי",
@@ -1036,68 +1036,42 @@ const date = (v) => (v ? new Date(v).toLocaleDateString() : "");
 const getCsrfToken = () =>
   document.cookie.match(/(?:^|; )csrf_token=([^;]*)/)?.[1] || "";
 async function api(url, opt = {}) {
-  let r = await fetch(API + url, {
-    ...opt,
-    credentials: "include",
-    headers: {
-      "Content-Type": "application/json",
-      ...(token ? { Authorization: "Bearer " + token } : {}),
-      ...(opt.headers || {}),
-    },
-  });
-  if (r.status === 401 && url != "/auth/refresh" && localStorage.accessToken) {
-    const rr = await fetch(API + "/auth/refresh", {
-      method: "POST",
-      credentials: "include",
-      headers: { "X-CSRF-Token": getCsrfToken() },
-    });
-    if (rr.ok) {
-      const x = await rr.json();
-      token = x.token;
-      localStorage.accessToken = token;
-      r = await fetch(API + url, {
-        ...opt,
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer " + token,
-          ...(opt.headers || {}),
-        },
-      });
-    }
+  const options = { ...opt, credentials: "include", headers: { "Content-Type": "application/json", ...(opt.headers || {}) } };
+  let response = await fetch(API + url, options);
+  if (response.status === 401 && !url.startsWith("/auth/")) {
+    const refreshed = await fetch(API + "/auth/refresh", { method: "POST", credentials: "include", headers: { "Content-Type": "application/json" }, body: "{}" });
+    if (refreshed.ok) response = await fetch(API + url, options);
   }
-  if (!r.ok) {
-    const x = await r.json().catch(() => ({}));
-    throw new Error(x.error?.message || "Request failed");
+  if (!response.ok) {
+    const result = await response.json().catch(() => ({}));
+    throw new Error(result.error?.message || "Request failed");
   }
-  return r.status === 204 ? null : r.json();
+  return response.status === 204 ? null : response.json();
 }
+
 function loginView() {
   document.body.className = lang === "he" ? "rtl" : "";
   $("#app").innerHTML =
-    `<div class="login"><div class="login-art"><div class="brand"><span class="brand-mark">G</span> Greece</div><h1>${tr("One platform.")}<br><span style="color:var(--primary2)">${tr("Total business clarity.")}</span></h1><p style="color:#98a4b8;max-width:560px;font-size:17px;line-height:1.7">${tr("Customers, sales, finance, people and projects—securely connected in one operating system.")}</p></div><div class="login-panel"><form class="login-box" id="loginForm"><div style="display:flex;justify-content:space-between;align-items:center"><span class="eyebrow">${tr("Secure workspace")}</span><button type="button" class="icon-btn lang-btn" title="${tr("Switch language")}" aria-label="${tr("Switch language")}" onclick="toggleLanguage()">${langLabel()}</button></div><h1 style="font-size:34px;margin:12px 0 8px">${tr("Welcome back")}</h1><p class="muted">${tr("Sign in to Greece Business Platform")}</p><div class="field"><label>${tr("Email")}</label><input name="email" type="email" autocomplete="username" required></div><div class="field"><label>${tr("Password")}</label><input name="password" type="password" autocomplete="current-password" required></div><label style="display:flex;gap:8px;align-items:center;margin:15px 0"><input name="rememberMe" type="checkbox" checked> ${tr("Remember this device")}</label><button type="submit" class="btn" style="width:100%;padding:13px">${tr("Sign in securely")}</button><button type="button" class="btn secondary" style="width:100%;margin-top:9px" onclick="passkeyLogin()">${tr("Sign in with a passkey")}</button><button type="button" class="btn secondary" style="width:100%;margin-top:9px" onclick="forgotPassword()">${tr("Forgot password")}</button></form></div></div>`;
+    `<div class="login"><div class="login-art"><div class="brand"><span class="brand-mark">G</span> Greece</div><h1>${tr("One platform.")}<br><span style="color:var(--primary2)">${tr("Total business clarity.")}</span></h1><p style="color:#98a4b8;max-width:560px;font-size:17px;line-height:1.7">${tr("Customers, sales, finance, people and projects—securely connected in one operating system.")}</p></div><div class="login-panel"><form class="login-box" id="loginForm"><div style="display:flex;justify-content:space-between;align-items:center"><span class="eyebrow">${tr("Secure workspace")}</span><button type="button" class="icon-btn lang-btn" title="${tr("Switch language")}" aria-label="${tr("Switch language")}" onclick="toggleLanguage()">${langLabel()}</button></div><h1 style="font-size:34px;margin:12px 0 8px">${tr("Welcome back")}</h1><p class="muted">${tr("Sign in to Greece Business Platform")}</p><div class="field"><label>${tr("Email")}</label><input name="email" type="email" autocomplete="username" required></div><div class="field"><label>${tr("Password")}</label><input name="password" type="password" autocomplete="current-password" required></div><button type="submit" class="btn" style="width:100%;padding:13px">${tr("Sign in securely")}</button><button type="button" class="btn secondary" style="width:100%;margin-top:9px" onclick="forgotPassword()">${tr("Forgot password")}</button></form></div></div>`;
   $("#loginForm").onsubmit = login;
   handlePasswordResetLink();
   handleInviteLink();
 }
 async function login(e) {
   e.preventDefault();
-  const b = Object.fromEntries(new FormData(e.target));
-  b.rememberMe = !!e.target.rememberMe.checked;
+  const button = e.target.querySelector('button[type="submit"]');
+  button.disabled = true;
   try {
-    const x = await api("/auth/login", {
-      method: "POST",
-      body: JSON.stringify(b),
-    });
-    if (x.twoFactorRequired) return toast(tr("Enter your two-factor code"));
-    token = x.token;
-    localStorage.accessToken = token;
-    user = x.user;
-    appView();
-  } catch (e) {
-    toast(e.message);
+    const values = Object.fromEntries(new FormData(e.target));
+    await api("/auth/login", { method: "POST", body: JSON.stringify({ email: values.email, password: values.password }) });
+    localStorage.removeItem("accessToken");
+    location.assign("/crm");
+  } catch (error) {
+    toast(error.message);
+    button.disabled = false;
   }
 }
+
 async function forgotPassword() {
   const data = await promptForm(tr("Forgot password"), [
     { name: "email", label: tr("Account email"), type: "email", required: true },
@@ -1127,7 +1101,7 @@ async function handlePasswordResetLink() {
       });
     },
   );
-  if (ok) toast(tr("Password updated. You can now sign in."));
+  if (ok) location.assign("/crm");
 }
 async function handleInviteLink() {
   const inviteToken = new URLSearchParams(location.hash.slice(1)).get(
@@ -1147,7 +1121,7 @@ async function handleInviteLink() {
       });
     },
   );
-  if (ok) toast(tr("Account activated. You can now sign in."));
+  if (ok) location.assign("/crm");
 }
 const svg = (inner) =>
   `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${inner}</svg>`;
@@ -1222,7 +1196,7 @@ async function dashboard() {
         lang === "he"
           ? `${isMorning ? "בוקר טוב" : "צהריים טובים"}, ${escapeHtml(firstName)}`
           : `Good ${isMorning ? "morning" : "afternoon"}, ${escapeHtml(firstName)}`;
-    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">${tr("Executive overview")}</span><h1>${greeting}</h1><p class="muted">${tr("Here is what is happening across your business today.")}</p></div><button class="btn" onclick="openModule('tasks');setTimeout(openCreate,20)">＋ ${tr("New task")}</button></div>${emailStatus.connected ? "" : `<div class="card" style="border-color:var(--yellow);margin-bottom:16px"><b>⚠ ${tr("Email delivery requires configuration")}</b><p class="muted" style="margin:7px 0 0">${tr("Contact forms are saved in CRM, but SMTP must be connected before messages can reach")} ${escapeHtml(emailStatus.recipient)}.</p></div>`}${!user.twoFactorEnabled && ["administrator", "super_admin"].includes(user.role) ? `<div class="card" style="border-color:var(--yellow);margin-bottom:16px"><b>⚠ ${tr("Two-factor authentication is not enabled")}</b><p class="muted" style="margin:7px 0 0">${tr("Your account has administrator access.")} <button class="btn secondary" style="padding:4px 12px;margin-inline-start:6px" onclick="openModule('security');setTimeout(setup2FA,20)">${tr("Enable 2FA now")}</button></p></div>` : ""}<div class="kpis">${[
+    el.innerHTML = `<div class="page-head"><div><span class="eyebrow">${tr("Executive overview")}</span><h1>${greeting}</h1><p class="muted">${tr("Here is what is happening across your business today.")}</p></div><button class="btn" onclick="openModule('tasks');setTimeout(openCreate,20)">＋ ${tr("New task")}</button></div>${emailStatus.connected ? "" : `<div class="card" style="border-color:var(--yellow);margin-bottom:16px"><b>⚠ ${tr("Email delivery requires configuration")}</b><p class="muted" style="margin:7px 0 0">${tr("Contact forms are saved in CRM, but SMTP must be connected before messages can reach")} ${escapeHtml(emailStatus.recipient)}.</p></div>`}<div class="kpis">${[
       [tr("Revenue"), money(k.revenue), "↗ 12.4%"],
       [tr("Expenses"), money(k.expenses), tr("Current period")],
       [tr("Net profit"), money(k.profit), tr("Healthy margin")],
@@ -1426,30 +1400,9 @@ async function testIntegration(provider) {
 }
 async function securityView() {
   const el = $("#content");
-  try {
-    const [x, passkeys, sessions, pushEnabled] = await Promise.all([
-      api("/security/overview"),
-      api("/auth/passkeys"),
-      api("/auth/sessions"),
-      isPushSubscribed(),
-    ]);
-    el.innerHTML = `${pageHead(title("Security Center"), tr("Authentication, sessions, passkeys and sensitive activity."), `<button class="btn secondary" onclick="${user.twoFactorEnabled ? "disable2FA()" : "setup2FA()"}">${user.twoFactorEnabled ? tr("Disable") : tr("Enable")} ${tr("2FA")}</button><button class="btn secondary" onclick="togglePushNotifications()">${pushEnabled ? tr("Disable") : tr("Enable")} ${tr("push notifications")}</button><button class="btn" onclick="registerPasskey()">＋ ${tr("Register passkey")}</button>`)}<div class="kpis">${[
-      [tr("Failed logins (24h)"), x.failedLogins24h],
-      [tr("Active sessions"), x.activeSessions],
-      [tr("Locked accounts"), x.lockedAccounts],
-      [tr("Registered passkeys"), x.passkeys],
-    ]
-      .map(
-        (v) =>
-          `<div class="card kpi"><span class="kpi-label">${v[0]}</span><div class="kpi-value">${v[1]}</div></div>`,
-      )
-      .join(
-        "",
-      )}</div><div class="dashboard-grid"><div class="card"><h3>${tr("My devices")}</h3>${sessions.map((s) => `<div class="activity-row"><div style="flex:1"><b>${escapeHtml((s.device || tr("Unknown")).slice(0, 60))}</b><small class="muted" style="display:block">${s.ip} · ${date(s.last_used_at)}</small></div>${s.revoked_at ? `<span class="badge overdue">${tr("Revoked")}</span>` : `<button class="btn danger" onclick="revokeSession('${s.id}')">${tr("Revoke")}</button>`}</div>`).join("")}</div><div class="card"><h3>${tr("Passkeys")}</h3>${passkeys.map((p) => `<div class="activity-row"><div style="flex:1"><b>${escapeHtml(p.device_name)}</b><small class="muted" style="display:block">${tr("Added")} ${date(p.created_at)}</small></div></div>`).join("") || `<p class="muted">${tr("No passkeys registered yet.")}</p>`}</div></div>`;
-  } catch (e) {
-    el.innerHTML = errorView(e);
-  }
+  el.innerHTML = `${pageHead(title("Security Center"), tr("Your workspace uses managed sign-in and server-checked staff roles."))}<div class="card"><h3>${tr("Account")}</h3><p>${escapeHtml(user.email)}</p><p class="muted">${tr("Role")}: ${title(user.role)}</p><p class="muted">${tr("Password recovery is available from the sign-in screen. Contact your workspace owner for account access changes.")}</p><button class="btn secondary" onclick="logout()">${tr("Log out")}</button></div>`;
 }
+
 async function revokeSession(id) {
   try {
     await api("/auth/sessions/" + id, { method: "DELETE" });
@@ -1774,7 +1727,7 @@ async function sendWhatsApp(customerId, phone) {
 function openFileUpload() {
   document.body.insertAdjacentHTML(
     "beforeend",
-    `<div class="modal-backdrop" id="modal"><form class="modal" id="fileForm"><div class="card-head"><div><span class="eyebrow">${tr("Secure storage")}</span><h2>${tr("Upload a file")}</h2></div><button type="button" class="icon-btn" aria-label="${tr("Close")}" onclick="$('#modal').remove()">×</button></div><div class="field"><label for="secureFile">${tr("File (PDF, image, text, CSV or XLSX; max 10 MB)")}</label><input id="secureFile" name="file" type="file" required></div><div class="form-grid"><div class="field"><label>${tr("Related record type")}</label><select name="entity_type"><option value="">${tr("General")}</option><option value="customer">${title("customer")}</option><option value="project">${title("project")}</option><option value="employee">${title("employee")}</option></select></div><div class="field"><label>${tr("Related record ID")}</label><input name="entity_id"></div><div class="field"><label>${tr("Minimum access role")}</label><select name="access_role"><option value="employee">${title("employee")}</option><option value="manager">${title("manager")}</option><option value="administrator">${title("administrator")}</option></select></div></div><div class="modal-actions"><button type="button" class="btn secondary" onclick="$('#modal').remove()">${tr("Cancel")}</button><button class="btn">${tr("Upload securely")}</button></div></form></div>`,
+    `<div class="modal-backdrop" id="modal"><form class="modal" id="fileForm"><div class="card-head"><div><span class="eyebrow">${tr("Secure storage")}</span><h2>${tr("Upload a file")}</h2></div><button type="button" class="icon-btn" aria-label="${tr("Close")}" onclick="$('#modal').remove()">×</button></div><div class="field"><label for="secureFile">${tr("File (PDF, image, text, CSV or XLSX; max 3 MB)")}</label><input id="secureFile" name="file" type="file" required></div><div class="form-grid"><div class="field"><label>${tr("Related record type")}</label><select name="entity_type"><option value="">${tr("General")}</option><option value="customer">${title("customer")}</option><option value="project">${title("project")}</option><option value="employee">${title("employee")}</option></select></div><div class="field"><label>${tr("Related record ID")}</label><input name="entity_id"></div><div class="field"><label>${tr("Minimum access role")}</label><select name="access_role"><option value="employee">${title("employee")}</option><option value="manager">${title("manager")}</option><option value="administrator">${title("administrator")}</option></select></div></div><div class="modal-actions"><button type="button" class="btn secondary" onclick="$('#modal').remove()">${tr("Cancel")}</button><button class="btn">${tr("Upload securely")}</button></div></form></div>`,
   );
   $("#fileForm").onsubmit = uploadFile;
 }
@@ -1783,6 +1736,7 @@ async function uploadFile(e) {
   const form = e.target,
     file = form.file.files[0];
   if (!file) return;
+  if (file.size > 3 * 1024 * 1024) return toast(tr("File limit is 3 MB"));
   try {
     toast(tr("Uploading…"));
     const data = await fileToDataUrl(file);
@@ -2023,38 +1977,17 @@ async function startNotificationStream() {
   notificationController?.abort();
   const controller = new AbortController();
   notificationController = controller;
-  try {
-    const initial = await api("/notifications?limit=100");
-    updateNotificationBadge(initial.data);
-    const response = await fetch(API + "/notifications/stream", {
-      headers: { Authorization: "Bearer " + token },
-      signal: controller.signal,
-    });
-    if (!response.ok || !response.body) throw new Error("Stream unavailable");
-    const reader = response.body.getReader(),
-      decoder = new TextDecoder();
-    let buffer = "";
-    while (!controller.signal.aborted) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const events = buffer.split("\n\n");
-      buffer = events.pop() || "";
-      for (const event of events) {
-        const data = event
-          .split("\n")
-          .find((line) => line.startsWith("data: "))
-          ?.slice(6);
-        if (data) updateNotificationBadge(JSON.parse(data));
-      }
-    }
-  } catch (e) {
-    if (!controller.signal.aborted)
-      setTimeout(() => {
-        if (notificationController === controller) startNotificationStream();
-      }, 5000);
+  async function poll() {
+    if (controller.signal.aborted) return;
+    try {
+      const result = await api("/notifications?limit=100");
+      if (!controller.signal.aborted) updateNotificationBadge(result.data);
+    } catch { /* Retry on the next polling interval. */ }
+    if (!controller.signal.aborted) setTimeout(poll, 30000);
   }
+  await poll();
 }
+
 const b64urlToBytes = (value) =>
   Uint8Array.from(
     atob(
@@ -3147,20 +3080,35 @@ document.addEventListener("keydown", (e) => {
   }
 });
 async function init() {
+  localStorage.removeItem("accessToken");
+  token = "";
   document.documentElement.dataset.theme = localStorage.theme || "light";
   applyLangAttrs();
+  const callback = new URLSearchParams(location.hash.slice(1));
+  if (callback.has("recovery_token") || callback.has("invite_token")) {
+    const kind = callback.has("recovery_token") ? "reset" : "invite";
+    const value = callback.get("recovery_token") || callback.get("invite_token");
+    history.replaceState(null, "", "/crm#" + kind + "=" + encodeURIComponent(value));
+    return loginView();
+  }
+  if (callback.has("confirmation_token")) {
+    const value = callback.get("confirmation_token");
+    history.replaceState(null, "", "/crm");
+    try { await api("/auth/confirm", { method: "POST", body: JSON.stringify({ token: value }) }); }
+    catch (error) { loginView(); toast(error.message); return; }
+  }
   const deepModule = location.pathname.match(/^\/crm\/([^/?#]+)/)?.[1];
-  current =
-    location.hash.slice(1) ||
-    (deepModule && modules[deepModule] ? deepModule : "dashboard");
-  if (!token) return loginView();
+  const requested = location.hash.slice(1) || deepModule || "dashboard";
+  current = modules[requested] ? requested : "dashboard";
+  if (callback.has("reset") || callback.has("invite")) return loginView();
   try {
     user = await api("/auth/me");
+    if (user.role === "employee" && current === "dashboard") current = "portal";
     appView();
-  } catch {
-    localStorage.removeItem("accessToken");
-    token = "";
+  } catch (error) {
     loginView();
+    if (error.message.includes("staff role")) toast(error.message);
   }
 }
+
 init();

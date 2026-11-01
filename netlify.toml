@@ -1,0 +1,72 @@
+[build]
+  publish = "public"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "esbuild"
+  external_node_modules = ["pdfkit"]
+
+# The preserved frontend checks this public configuration before rendering.
+[[redirects]]
+  from = "/api/apps/public/prod/public-settings/by-id/6a44dca7580bc27a93b13907"
+  to = "/public-settings.json"
+  status = 200
+
+# These pages use the CRM interface rather than the public React application.
+[[redirects]]
+  from = "/dashboard"
+  to = "/crm"
+  status = 302
+
+[[redirects]]
+  from = "/login"
+  to = "/crm"
+  status = 302
+
+[[redirects]]
+  from = "/register"
+  to = "/crm"
+  status = 302
+
+[[redirects]]
+  from = "/forgot-password"
+  to = "/crm"
+  status = 302
+
+[[redirects]]
+  from = "/reset-password"
+  to = "/crm"
+  status = 302
+
+[[redirects]]
+  from = "/crm"
+  to = "/crm.html"
+  status = 200
+
+[[redirects]]
+  from = "/crm/*"
+  to = "/crm.html"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "DENY"
+
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+

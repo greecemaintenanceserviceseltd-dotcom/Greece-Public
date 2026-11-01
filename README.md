@@ -92,6 +92,33 @@ For the AI account-summary button on the customer 360 view, also configure:
 ANTHROPIC_API_KEY=your-anthropic-api-key
 ```
 
+## Deploying the website to Netlify
+
+The repository's `netlify.toml` publishes `public/` and routes public pages to
+the existing frontend. CRM URLs serve `crm.html`. No frontend build is required
+because the compiled assets are already included in `public/assets/`.
+
+The public application settings and web app manifest are available as static
+JSON files. The `/api/*` routes are handled by Netlify Functions. Structured business records
+use Netlify Database with the schema in `db/schema.ts`; generated migrations are
+applied by the platform during deployment. Documents and record snapshots use
+Netlify Blobs. The legacy SQLite server is not used by this Netlify deployment.
+
+The Railway domains below returned "Application not found" when checked on
+2026-11-01. The Netlify backend started with a fresh schema; historical records
+and accounts were not imported from those unavailable services.
+
+Workspace sign-in uses Netlify Identity. After deployment, invite the first
+administrator from the project Identity dashboard and assign the `admin` role.
+Public signups do not grant CRM access. Additional staff accounts require a
+server-controlled staff role. Password recovery and invitation callbacks return
+to the CRM. SMTP settings and a verified sender must be configured for contact
+notifications and invoice email; contact submissions are saved independently of
+email delivery. Deployment-time database initialization and successful
+authenticated operations still require end-to-end verification. Legacy custom
+passkey and two-factor interfaces were replaced with the managed sign-in flow;
+external payment, accounting, and messaging providers remain unconnected.
+
 ## Deploying to Railway
 
 Railway can host both the frontend and backend from this single Node.js app.

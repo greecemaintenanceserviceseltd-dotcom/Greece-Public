@@ -1,4 +1,4 @@
-const CACHE = "greece-pwa-v1";
+const CACHE = "greece-pwa-v2";
 const OFFLINE_URL = "/offline.html";
 const PRECACHE = ["/", "/offline.html", "/manifest.json"];
 
@@ -41,8 +41,10 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(
       fetch(request)
         .then((response) => {
-          const copy = response.clone();
-          caches.open(CACHE).then((cache) => cache.put(request, copy));
+          if (response.ok) {
+            const copy = response.clone();
+            caches.open(CACHE).then((cache) => cache.put(request, copy));
+          }
           return response;
         })
         .catch(
