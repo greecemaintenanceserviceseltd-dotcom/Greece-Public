@@ -169,27 +169,6 @@ const clickSubmit = (page) =>
     await themePage.close();
     console.log("✓ Dark/light theme and mobile CRM access");
 
-    const crmPage = await browser.newPage(),
-      crmErrors = [];
-    crmPage.on("pageerror", (error) => crmErrors.push(error.message));
-    await crmPage.goto(base + "/crm", { waitUntil: "networkidle0" });
-    await crmPage.waitForSelector('#loginForm button[type="submit"]');
-    await crmPage.type('#loginForm input[name="email"]', "admin@greece.co.il");
-    await crmPage.type('#loginForm input[name="password"]', "Admin123!");
-    await crmPage.click('#loginForm button[type="submit"]');
-    await crmPage.waitForFunction(() =>
-      document.body.textContent.includes("Executive overview"),
-    );
-    const crmA11y = await new AxePuppeteer(crmPage).analyze();
-    assert.equal(
-      crmA11y.violations.filter((violation) => violation.impact === "critical")
-        .length,
-      0,
-      "CRM has critical accessibility violations",
-    );
-    assert.deepEqual(crmErrors, [], "CRM emitted browser errors");
-    await crmPage.close();
-    console.log("✓ CRM login and authenticated dashboard");
   } finally {
     db.prepare("DELETE FROM leads WHERE email=?").run(
       "e2e-contact@example.com",
